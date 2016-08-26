@@ -1,0 +1,12 @@
+{application, wsclient,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { wsclient_app, []}},
+  {env, []}
+ ]}.
