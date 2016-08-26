@@ -1,12 +1,13 @@
 {application, wsclient,
  [
-  {description, ""},
-  {vsn, "1"},
+  {description, "WebSocket Client"},
+  {vsn, "1.0.0"},
   {registered, []},
   {applications, [
                   kernel,
                   stdlib
                  ]},
+  {modules,[]},
   {mod, { wsclient_app, []}},
   {env, []}
  ]}.

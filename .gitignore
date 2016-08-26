@@ -1,0 +1,7 @@
+*.beam
+ebin/*
+deps/*
+_rel/*
+*.dump
+.rebar/*
+log/*
