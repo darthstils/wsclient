@@ -2,7 +2,7 @@
 
 -export([
 	start/0,
-	stop/0	
+	stop/0
 ]).
 
 %%--------------------------------------------------------------------
@@ -13,21 +13,20 @@ start() ->
 	start_applications(
 		file:consult(
 			"relx.config"
-		),
-		start
+		)
 	).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-start_applications({ok,[Config|_]},Fun) ->
+start_applications({ok,[Config|_]}) ->
 
 	lists:map(fun(Name) ->
 
-		application:Fun(Name)
+		application:start(Name)
 
 	end, erlang:element(3,Config));
 
-start_applications(_,_) -> [].
+start_applications(_) -> [].
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------

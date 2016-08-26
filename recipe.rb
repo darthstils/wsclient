@@ -1,4 +1,4 @@
-class wclient < FPM::Cookery::Recipe
+class wslient < FPM::Cookery::Recipe
       
 
       source "file://#{ENV['WORKSPACE']}"
