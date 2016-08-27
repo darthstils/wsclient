@@ -10,6 +10,7 @@
 -define(Connected,	"Connection set with host:[ ~p ].").
 -define(Reconnecting,	"Start reconnrction process with host:[ ~p ].").
 -define(Disconnect,	"Connection with host:[ ~p ] closed.").
+-define(WSHandshake,	"Connecting to websocket:[ ~p://~p ] ... Please wait ...").
 
 -export([start_link/0]).
 
@@ -157,10 +158,18 @@ connect(_Args,#ws_state{
 	]),
 
 	spawn(fun()->
-
 		receiver(PID,State)
-
 	end),
+
+	wsclient:info(
+		?WSHandshake,[
+		State#ws_state.protocol,
+		State#ws_state.host
+	]),
+
+	send(?WS_HANDSHAKE(
+		State#ws_state.host
+	)),
 
 	State#ws_state{ pid = PID };
 
@@ -237,7 +246,7 @@ reload_config(_Args,State) ->
 receiver(PID,State) ->
 
 	receiver(
-		PID,
+		State,
 		?TCP_LIB(
 			State#ws_state.protocol
 		):recv(PID,0),
@@ -245,6 +254,6 @@ receiver(PID,State) ->
 	).
 
 receiver(_,{error,_},message) -> [];
-receiver(PID,Message,message) -> 
+receiver(State,{ok,Message},message) -> 
 
-	io:format("AAAAAAAAAs~p~n",[Message]).
+	wsprotocol:unpack(Message,State).
