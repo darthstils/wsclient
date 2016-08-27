@@ -5,6 +5,12 @@
 -include("ws.hrl").
 -include("records.hrl").
 
+-define(Connecting,	"Connecting to host:[ ~p ] ... Please wait ...").
+-define(NotConnected,	"Connection not set with host:[ ~p ]. Reason:[ ~p ].").
+-define(Connected,	"Connection set with host:[ ~p ].").
+-define(Reconnecting,	"Start reconnrction process with host:[ ~p ].").
+-define(Disconnect,	"Connection with host:[ ~p ] closed.").
+
 -export([start_link/0]).
 
 -export([
@@ -17,20 +23,25 @@
 ]).
 
 -export([
+	send/1,
 	connect/0,
 	disconnect/0,
-	reconnect/0,
 	reload_config/0
 ]).
 
 -export([
+	send/2,
 	connect/2,
 	disconnect/2,
-	reconnect/2,
+	tcp_closed/2,
+	ssl_closed/2,
 	reload_config/2
 ]).
 
-
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
+send(Message)	-> ?MODULE ! {send,Message}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -39,10 +50,6 @@ connect()	-> ?MODULE ! {connect,[]}.
 %%
 %%--------------------------------------------------------------------
 disconnect()	-> ?MODULE ! {disconnect,[]}.
-%%--------------------------------------------------------------------
-%%
-%%--------------------------------------------------------------------
-reconnect()	-> ?MODULE ! {reconnect,[]}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -83,11 +90,7 @@ handle_info({Command,Args}, State) ->
 		Args,State
 	)};
 
-handle_info(_Info, State) -> 
-
-	io:format("~p~n",[State]),
-
-	{noreply, State}.
+handle_info(_Info, State) -> io:format("~p~n",[State]),{noreply, State}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -99,16 +102,40 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
+send(Message,#ws_state{
+		pid = null 
+	} = State) -> State;
+send(Message,State) ->
+
+	?TCP_LIB(
+		State#ws_state.protocol
+	):send(
+		State#ws_state.pid,
+		Message
+	),
+
+	State.
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
 connect(_Args,#ws_state{
 		pid = null
 	}=State) ->
-		
+	
+	wsclient:info(?Connecting,[
+		State#ws_state.host
+	]),
+
 	Result = ?TCP_LIB(
 		State#ws_state.protocol
 	):connect(
 		State#ws_state.host,
 		State#ws_state.port,
-		[binary,{packet,0}],
+		[
+			{mode, 		binary},
+      {active, 	false},
+      {packet, 	raw}
+    ],
 	State#ws_state.connect_timeout),
 
 	connect(_Args,State#ws_state{
@@ -119,11 +146,26 @@ connect(_Args,#ws_state{
 		pid = {ok,PID}
 	}=State) ->
 
+	wsclient:info(?Connected,[
+		State#ws_state.host
+	]),
+
+	spawn(fun()->
+
+		receiver(PID,State)
+
+	end),
+
 	State#ws_state{ pid = PID };
 
 connect(_Args,#ws_state{
 		pid = {error,Reason}
 	}=State) ->
+
+	wsclient:err(?NotConnected,[
+		State#ws_state.host,
+		Reason
+	]),
 
 	State#ws_state{ pid = null };
 
@@ -131,24 +173,30 @@ connect(_,State) -> State.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
+ssl_closed(_Args,State) -> disconnect(_Args,State).
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
+tcp_closed(_Args,State) -> disconnect(_Args,State).
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
+disconnect(_Args,#ws_state{
+		pid = null
+	}=State) -> State;
 disconnect(_Args,#ws_state{
 		pid = PID
 	}=State) ->
+
+	wsclient:info(?Disconnect,[
+		State#ws_state.host
+	]),
 
 	?TCP_LIB(
 		State#ws_state.protocol
 	):close(PID),
 
 	State#ws_state{	pid = null }.
-%%--------------------------------------------------------------------
-%%
-%%--------------------------------------------------------------------
-reconnect(_Args,State) -> 
-
-	connect(_Args,disconnect(
-			_Args,State
-		)
-	).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -164,4 +212,20 @@ reload_config(_Args,State) ->
 			#ws_state{}
 		)
 	).	
-		
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
+receiver(PID,State) ->
+
+	receiver(
+		PID,
+		?TCP_LIB(
+			State#ws_state.protocol
+		):recv(PID,0),
+		message
+	).
+
+receiver(_,{error,_},message) -> io:format("asdasda"), disconnect();
+receiver(_,Message,message) -> 
+
+	io:format("AAAAAAAAAs~p~n",[Message]).
