@@ -29,7 +29,6 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 	),
 
 	handshake(Code,ResponseDesc,State);
-
 unpack(Message,_) -> io:format("~p~n",[Message]).
 %%--------------------------------------------------------------------
 %%

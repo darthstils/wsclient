@@ -158,7 +158,9 @@ connect(_Args,#ws_state{
 	]),
 
 	spawn(fun()->
-		receiver(PID,State)
+		receiver(State#ws_state{
+				pid = PID
+			})
 	end),
 
 	wsclient:info(
@@ -243,17 +245,21 @@ reload_config(_Args,State) ->
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-receiver(PID,State) ->
+receiver(State) ->
 
 	receiver(
 		State,
 		?TCP_LIB(
 			State#ws_state.protocol
-		):recv(PID,0),
+		):recv(State#ws_state.pid,0),
 		message
 	).
 
-receiver(_,{error,_},message) -> [];
+receiver(_,{error,R},message) -> io:format("~p~n",[R]), [];
 receiver(State,{ok,Message},message) -> 
 
-	wsprotocol:unpack(Message,State).
+	wsprotocol:unpack(Message,State),
+
+	receiver(State).
+
+
