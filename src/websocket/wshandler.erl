@@ -26,6 +26,7 @@
 	send/1,
 	connect/0,
 	disconnect/0,
+	reconnect/0,
 	reload_config/0
 ]).
 
@@ -35,6 +36,7 @@
 	disconnect/2,
 	tcp_closed/2,
 	ssl_closed/2,
+	reconnect/2,
 	reload_config/2
 ]).
 
@@ -50,6 +52,10 @@ connect()	-> ?MODULE ! {connect,[]}.
 %%
 %%--------------------------------------------------------------------
 disconnect()	-> ?MODULE ! {disconnect,[]}.
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
+reconnect()	-> ?MODULE ! {reconnect,[]}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -169,7 +175,7 @@ connect(_Args,#ws_state{
 
 	State#ws_state{ pid = null };
 
-connect(_,State) -> State.
+connect(S,State) -> State.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -200,6 +206,19 @@ disconnect(_Args,#ws_state{
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
+reconnect(_Args,State) -> 
+
+	wsclient:info(?Reconnecting,[
+		State#ws_state.host
+	]),
+
+	connect(_Args,disconnect(
+			_Args,State
+		)
+	).
+%%--------------------------------------------------------------------
+%%
+%%--------------------------------------------------------------------
 reload_config(_Args,State) -> 
 
 	disconnect(
@@ -225,7 +244,7 @@ receiver(PID,State) ->
 		message
 	).
 
-receiver(_,{error,_},message) -> io:format("asdasda"), disconnect();
-receiver(_,Message,message) -> 
+receiver(_,{error,_},message) -> [];
+receiver(PID,Message,message) -> 
 
 	io:format("AAAAAAAAAs~p~n",[Message]).
