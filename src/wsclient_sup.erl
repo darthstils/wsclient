@@ -21,6 +21,8 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
 
+		wsclient:load_config(),
+
 		WSHandler = ?CHILD(wshandler,worker),
 
     {ok, { {one_for_one, 5, 10}, [WSHandler]} }.

@@ -72,7 +72,8 @@ bin2ip(BinIP) ->
 str2ip(StrIP) ->
 
 	[A,B,C,D] = string:tokens(
-		StrIP,"."),
+		StrIP,"."
+	),
 
 	{
 		to_int(A),
