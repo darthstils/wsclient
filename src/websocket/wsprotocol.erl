@@ -20,7 +20,7 @@
 pack(Message,Type) 
 		when is_binary(Message) ->
 	
-	Opcode = ?OPCODE(Type),
+	Opcode = ?TO_OPCODE(Type),
 
 	Length = wslength(
 		byte_size(Message)
@@ -49,28 +49,12 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 			http_bin,Handshake,[]
 		),
 	State);
-	
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
-	#ws_state{
-		receiver = Receiver
-	}=State)
-		when Opcode == 9 -> 
-
-	wsclient:info(
-		?WSPing,[
-		State#ws_state.protocol,
-		State#ws_state.host
-	]),	
-
-	Receiver:message(
-		{system,ping},State
-	);
 
 unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
 	#ws_state{
 		receiver = Receiver
 	}=State)
-		when Opcode == 8 -> 
+		when Opcode > 7 -> 
 
 	wsclient:info(
 		?WSClose,[
@@ -79,7 +63,7 @@ unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
 	]),
 
 	Receiver:message(
-		{system,close},State
+		{system,?FROM_OPCODE(Opcode)},State
 	);
 
 unpack(<<1:1,0:3,_Opcode:4,0:1,127:7,0:1,_Len:63,Message/bits>>,

@@ -25,7 +25,7 @@
 	end ++ "\r\n"
 ).
 
--define(OPCODE(X),
+-define(TO_OPCODE(X),
 	case X of
 		continuation -> 0;
 		text -> 1;
@@ -33,6 +33,18 @@
 		close -> 8;
 		ping -> 9;
 		pong -> 10;
+		_ ->	9
+	end	
+).
+
+-define(FROM_OPCODE(X),
+	case X of
+		0 -> continuation;
+		1 -> text;
+		2 -> binary;
+		8 -> close;
+		9 -> ping;
+		10 -> pong;
 		_ ->	9
 	end	
 ).
