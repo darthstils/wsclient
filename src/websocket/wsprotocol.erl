@@ -10,6 +10,9 @@
 
 -define(WSHandshakeOK,	"Connected to websocket:[ ~p://~p ].").
 -define(WSHandshakeERR,	"Not connected to websocket:[ ~p://~p ]. Code:[~p]. Reason:[ ~p ]").
+-define(WSPing,	"Web Socket received PING message from:[ ~p://~p ].").
+-define(WSClose,	"Web Socket received CLOSE message from:[ ~p://~p ].").
+-define(WSPong,	"Web Socket sending PONG message to:[ ~p://~p ].").
 
 %%--------------------------------------------------------------------
 %%
@@ -29,8 +32,6 @@ pack(Message,Type)
 
 	Head = <<1:1,0:3,Opcode:4,1:1,Length/bits,Key/bits>>,
 
-	io:format("~p~n",[Length]),
-
 	Masked = mask_message(
 		MaskKey,Message,<<>>
 	),
@@ -48,21 +49,43 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 			http_bin,Handshake,[]
 		),
 	State);
-
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) 
+	
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State) 
 		when Opcode == 9 -> 
+
+	wsclient:info(
+		?WSPing,[
+		State#ws_state.protocol,
+		State#ws_state.host
+	]),	
+
+	wsclient:info(
+		?WSPong,[
+		State#ws_state.protocol,
+		State#ws_state.host
+	]),	
 
 	wshandler:send({<<>>,pong});
 
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) 
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State) 
 		when Opcode == 8 -> 
+
+	wsclient:info(
+		?WSClose,[
+		State#ws_state.protocol,
+		State#ws_state.host
+	]),
 
 	wshandler:disconnect();
 
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) ->
+unpack(<<1:1,0:3,_Opcode:4,0:1,126:7,_Len:16,_Rest/bits>>,_) ->
+
+	io:format("~p~n",[_Rest]);
+
+unpack(<<1:1,0:3,_Opcode:4,0:1,_Len:7,_Rest/bits>>,_) ->
 	
-	io:format("~p~n",[_Rest]),	
-	io:format("~p~n",[Opcode]).
+	io:format("~p~n",[_Rest]).
+	
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------

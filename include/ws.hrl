@@ -6,19 +6,23 @@
 	end
 ).
 
--define(WS_HANDSHAKE(Host),
+-define(WS_HANDSHAKE(Host,Subprotocol),
 	"GET / HTTP/1.1\r\n"
 	"Host: "++Host++"\r\n"
 	"Upgrade: websocket\r\n"
 	"Connection: Upgrade\r\n"
 	"Sec-WebSocket-Key: "
-	++convert:to_list(
+	++ convert:to_list(
 		base64:encode(
 			crypto:rand_bytes(16)
 		)
-	)++"\r\n"
-	"Sec-WebSocket-Version: 13\r\n"
-	"\r\n"
+	) ++ "\r\n"
+	"Sec-WebSocket-Version: 13\r\n"++
+	case Subprotocol of
+		[] -> "";
+		_ ->
+			"Sec-WebSocket-Protocol: " ++ Subprotocol ++ "\r\n"
+	end ++ "\r\n"
 ).
 
 -define(OPCODE(X),

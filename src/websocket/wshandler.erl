@@ -112,13 +112,15 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 send(_,#ws_state{
 		pid = null 
 	} = State) -> State;
+
 send({Message,Type},State) ->
-	io:format("~p~n",[State]),
+
 	send(
 		wsprotocol:pack(
 			Message,Type
 		),State
 	);
+
 send(Message,State) ->
 
 	?TCP_LIB(
@@ -177,7 +179,8 @@ connect(_Args,#ws_state{
 	]),
 
 	send(?WS_HANDSHAKE(
-		State#ws_state.host
+		State#ws_state.host,
+		State#ws_state.subprotocol
 	)),
 
 	State#ws_state{ pid = PID };

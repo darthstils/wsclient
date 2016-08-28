@@ -28,9 +28,7 @@ set_items(Table,Items) ->
 
 	existens_of_table(Table),
 
-	ets:insert(Table,Items);
-
-set_items(_,_) -> [].
+	ets:insert(Table,Items).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
