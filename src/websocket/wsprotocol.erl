@@ -8,8 +8,8 @@
 -include("records.hrl").
 -include("ws.hrl").
 
--define(WSHandshakeOK,	"ConnectePart to websocket:[ ~p://~p ].").
--define(WSHandshakeERR,	"Not connectePart to websocket:[ ~p://~p ]. CoParte:[~p]. Reason:[ ~p ]").
+-define(WSHandshakeOK,	"Connected to websocket:[ ~p://~p ].").
+-define(WSHandshakeERR,	"Not connected to websocket:[ ~p://~p ]. Code:[~p]. Reason:[ ~p ]").
 
 %%--------------------------------------------------------------------
 %%
@@ -40,27 +40,18 @@ pack(_,_) -> pack(<<>>,binary).
 %%
 %%--------------------------------------------------------------------
 unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
+	
+	handshake(
+		erlang:decode_packet(
+			http_bin,Handshake,[]
+		),
+	State);
 
-	[Head|_] = binary:split(
-		Handshake,
-		[<<"\r\n">>,<<": ">>],
-		[global]
-	),
-
-	[_,Rest] = binary:split(
-		Head,[<<" ">>]
-	),
-
-	[Code,ResponseDesc] = binary:split(
-		Rest,[<<" ">>]
-	),
-
-	handshake(Code,ResponseDesc,State);
 unpack(Message,_) -> io:format("~p~n",[Message]).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-handshake(<<"101">>,_ResponseDesc,State) ->
+handshake({ok,{_,_,101,_},_},State) ->
 
 	wsclient:info(
 		?WSHandshakeOK,[
@@ -68,14 +59,14 @@ handshake(<<"101">>,_ResponseDesc,State) ->
 		State#ws_state.host
 	]);
 
-handshake(Code,ResponseDesc,State) ->
+handshake({ok,{_,_,Code,Desc},_},State) ->
 
 	wsclient:info(
 		?WSHandshakeERR,[
 		State#ws_state.protocol,
 		State#ws_state.host,
 		Code,
-		ResponseDesc
+		Desc
 	]),
 
 	wshandler:disconnect().
