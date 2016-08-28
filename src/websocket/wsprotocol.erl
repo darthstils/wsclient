@@ -50,7 +50,10 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 		),
 	State);
 	
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State) 
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
+	#ws_state{
+		receiver = Receiver
+	}=State)
 		when Opcode == 9 -> 
 
 	wsclient:info(
@@ -59,15 +62,14 @@ unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State)
 		State#ws_state.host
 	]),	
 
-	wsclient:info(
-		?WSPong,[
-		State#ws_state.protocol,
-		State#ws_state.host
-	]),	
+	Receiver:message(
+		{system,ping},State
+	);
 
-	wshandler:send({<<>>,pong});
-
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State) 
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
+	#ws_state{
+		receiver = Receiver
+	}=State)
 		when Opcode == 8 -> 
 
 	wsclient:info(
@@ -76,28 +78,58 @@ unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,State)
 		State#ws_state.host
 	]),
 
-	wshandler:disconnect();
+	Receiver:message(
+		{system,close},State
+	);
 
-unpack(<<1:1,0:3,_Opcode:4,0:1,126:7,_Len:16,_Rest/bits>>,_) ->
+unpack(<<1:1,0:3,_Opcode:4,0:1,127:7,0:1,_Len:63,Message/bits>>,
+	#ws_state{
+		receiver = Receiver
+	}=State) ->
 
-	io:format("~p~n",[_Rest]);
+	Receiver:message(
+		{msg,Message},State
+	);
 
-unpack(<<1:1,0:3,_Opcode:4,0:1,_Len:7,_Rest/bits>>,_) ->
-	
-	io:format("~p~n",[_Rest]).
-	
+unpack(<<1:1,0:3,_Opcode:4,0:1,126:7,_Len:16,Message/bits>>,
+	#ws_state{
+		receiver = Receiver
+	}=State) ->
+
+	Receiver:message(
+		{msg,Message},State
+	);
+
+unpack(<<1:1,0:3,_Opcode:4,0:1,_Len:7,Message/bits>>,
+	#ws_state{
+		receiver = Receiver
+	}=State) ->
+
+	Receiver:message(
+		{msg,Message},State
+	).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-handshake({ok,{_,_,101,_},_},State) ->
+handshake({ok,{_,_,101,_},_},
+	#ws_state{
+		receiver = Receiver
+	}=State) ->
 
 	wsclient:info(
 		?WSHandshakeOK,[
 		State#ws_state.protocol,
 		State#ws_state.host
-	]);
+	]),
 
-handshake({ok,{_,_,Code,Desc},_},State) ->
+	Receiver:message(
+		{system,handshake_ok},State
+	);
+
+handshake({ok,{_,_,Code,Desc},_},
+	#ws_state{
+		receiver = Receiver
+	}=State) ->
 
 	wsclient:info(
 		?WSHandshakeERR,[
@@ -107,7 +139,9 @@ handshake({ok,{_,_,Code,Desc},_},State) ->
 		Desc
 	]),
 
-	wshandler:disconnect().
+	Receiver:message(
+		{system,handshake_error},
+	State).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
