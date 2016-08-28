@@ -20,3 +20,17 @@
 	"Sec-WebSocket-Version: 13\r\n"
 	"\r\n"
 ).
+
+-define(OPCODE(X),
+	case X of
+		continuation -> 0;
+		text -> 1;
+		binary -> 2;
+		close -> 8;
+		ping -> 9;
+		pong -> 10;
+		_ ->	9
+	end	
+).
+
+-define(WSHEAD,<<1:1,0:3>>).

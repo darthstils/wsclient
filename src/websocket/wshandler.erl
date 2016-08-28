@@ -109,9 +109,15 @@ code_change(_OldVsn, State, _Extra) -> {ok, State}.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-send(Message,#ws_state{
+send(_,#ws_state{
 		pid = null 
 	} = State) -> State;
+send({Message,Type},State) ->
+	send(
+		wsprotocol:pack(
+			Message,Type
+		),State
+	);
 send(Message,State) ->
 
 	?TCP_LIB(
@@ -186,7 +192,7 @@ connect(_Args,#ws_state{
 
 	State#ws_state{ pid = null };
 
-connect(S,State) -> State.
+connect(_,State) -> State.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
