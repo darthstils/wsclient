@@ -113,6 +113,7 @@ send(_,#ws_state{
 		pid = null 
 	} = State) -> State;
 send({Message,Type},State) ->
+	io:format("~p~n",[State]),
 	send(
 		wsprotocol:pack(
 			Message,Type

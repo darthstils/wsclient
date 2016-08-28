@@ -15,7 +15,7 @@
 %%
 %%--------------------------------------------------------------------
 pack(Message,Type) 
-	when is_binary(Message) ->
+		when is_binary(Message) ->
 	
 	Opcode = ?OPCODE(Type),
 
@@ -28,6 +28,8 @@ pack(Message,Type)
 	<<MaskKey:32>> = Key,
 
 	Head = <<1:1,0:3,Opcode:4,1:1,Length/bits,Key/bits>>,
+
+	io:format("~p~n",[Length]),
 
 	Masked = mask_message(
 		MaskKey,Message,<<>>
@@ -47,7 +49,20 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 		),
 	State);
 
-unpack(Message,_) -> io:format("~p~n",[Message]).
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) 
+		when Opcode == 9 -> 
+
+	wshandler:send({<<>>,pong});
+
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) 
+		when Opcode == 8 -> 
+
+	wshandler:disconnect();
+
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,_) ->
+	
+	io:format("~p~n",[_Rest]),	
+	io:format("~p~n",[Opcode]).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
@@ -73,14 +88,11 @@ handshake({ok,{_,_,Code,Desc},_},State) ->
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-wslength(Length) 
-	when Length =< 16#e1 ->	<<Length:7>>;
+wslength(Length) when Length =< 16#7f -> <<Length:7>>;
 
-wslength(Length) 
-	when Length =< 16#ffff -> <<126:7,Length:16>>;
+wslength(Length) when Length =< 16#ffff -> <<126:7,Length:16>>;
 
-wslength(Length) 
-	when Length =< 16#7fffffffffffffff -> <<127:7,Length:64>>.
+wslength(Length) when Length =< 16#7fffffffffffffff -> <<127:7,Length:64>>.
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
