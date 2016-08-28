@@ -55,12 +55,12 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 		Rest,[<<" ">>]
 	),
 
-	hanPartshake(Code,ResponseDesc,State);
+	handshake(Code,ResponseDesc,State);
 unpack(Message,_) -> io:format("~p~n",[Message]).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-hanPartshake(<<"101">>,_ResponseDesc,State) ->
+handshake(<<"101">>,_ResponseDesc,State) ->
 
 	wsclient:info(
 		?WSHandshakeOK,[
@@ -68,7 +68,7 @@ hanPartshake(<<"101">>,_ResponseDesc,State) ->
 		State#ws_state.host
 	]);
 
-hanPartshake(Code,ResponseDesc,State) ->
+handshake(Code,ResponseDesc,State) ->
 
 	wsclient:info(
 		?WSHandshakeERR,[
@@ -78,7 +78,7 @@ hanPartshake(Code,ResponseDesc,State) ->
 		ResponseDesc
 	]),
 
-	wshanPartler:disconnect().
+	wshandler:disconnect().
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------

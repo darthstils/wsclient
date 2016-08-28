@@ -264,7 +264,9 @@ receiver(State) ->
 receiver(_,{error,R},message) -> io:format("~p~n",[R]), [];
 receiver(State,{ok,Message},message) -> 
 
-	wsprotocol:unpack(Message,State),
+	wsprotocol:unpack(
+		Message,State
+	),
 
 	receiver(State).
 
