@@ -9,7 +9,7 @@ DEPS = #lager #reloader
 
 # Compiler options.
 ERLC_OPTS ?= -W1
-ERLC_OPTS += +'{parse_transform, lager_transform}' +'{lager_truncation_size, 1024}'
+#ERLC_OPTS += +'{parse_transform, lager_transform}' +'{lager_truncation_size, 1024}'
 
 # git urls
 RELX_URL = https://git.ceb.loc/erlang/relx/raw/v1.1.0-1/relx
