@@ -115,6 +115,8 @@ send(_,#ws_state{
 
 send({Message,Type},State) ->
 
+	% io:format("~p~n",[Message]),
+
 	send(
 		wsprotocol:pack(
 			Message,Type
@@ -265,7 +267,7 @@ receiver(State) ->
 		message
 	).
 
-receiver(_,{error,R},message) -> [];
+receiver(_,{error,_Reason},message) -> [];
 receiver(State,{ok,Message},message) -> 
 
 	wsprotocol:unpack(

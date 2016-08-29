@@ -39,12 +39,12 @@
 
 -define(FROM_OPCODE(X),
 	case X of
-		0 -> continuation;
-		1 -> text;
-		2 -> binary;
-		8 -> close;
-		9 -> ping;
-		10 -> pong;
-		_ ->	9
+		0 -> {msg,continuation};
+		1 -> {msg,text};
+		2 -> {msg,binary};
+		8 -> {system,close};
+		9 -> {system,ping};
+		10 -> {system,pong};
+		_ ->	{system,unknown}
 	end	
 ).

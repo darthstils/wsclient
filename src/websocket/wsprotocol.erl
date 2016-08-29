@@ -50,47 +50,37 @@ unpack(<<$H,$T,$T,$P,_/binary>>=Handshake,State) ->
 		),
 	State);
 
-unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,_Rest/bits>>,
-	#ws_state{
-		receiver = Receiver
-	}=State)
-		when Opcode > 7 -> 
-
-	wsclient:info(
-		?WSClose,[
-		State#ws_state.protocol,
-		State#ws_state.host
-	]),
-
-	Receiver:message(
-		{system,?FROM_OPCODE(Opcode)},State
-	);
-
-unpack(<<1:1,0:3,_Opcode:4,0:1,127:7,0:1,_Len:63,Message/bits>>,
+unpack(<<1:1,0:3,Opcode:4,0:1,127:7,0:1,_Len:63,Message/bits>>,
 	#ws_state{
 		receiver = Receiver
 	}=State) ->
 
 	Receiver:message(
-		{msg,Message},State
+		?FROM_OPCODE(Opcode),
+		Message,
+		State
 	);
 
-unpack(<<1:1,0:3,_Opcode:4,0:1,126:7,_Len:16,Message/bits>>,
+unpack(<<1:1,0:3,Opcode:4,0:1,126:7,_Len:16,Message/bits>>,
 	#ws_state{
 		receiver = Receiver
 	}=State) ->
 
 	Receiver:message(
-		{msg,Message},State
+		?FROM_OPCODE(Opcode),
+		Message,
+		State
 	);
 
-unpack(<<1:1,0:3,_Opcode:4,0:1,_Len:7,Message/bits>>,
+unpack(<<1:1,0:3,Opcode:4,0:1,_Len:7,Message/bits>>,
 	#ws_state{
 		receiver = Receiver
 	}=State) ->
 
 	Receiver:message(
-		{msg,Message},State
+		?FROM_OPCODE(Opcode),
+		Message,
+		State
 	).
 %%--------------------------------------------------------------------
 %%
@@ -107,7 +97,9 @@ handshake({ok,{_,_,101,_},_},
 	]),
 
 	Receiver:message(
-		{system,handshake_ok},State
+		{system,handshake_ok},
+		<<>>,
+		State
 	);
 
 handshake({ok,{_,_,Code,Desc},_},
@@ -125,7 +117,9 @@ handshake({ok,{_,_,Code,Desc},_},
 
 	Receiver:message(
 		{system,handshake_error},
-	State).
+		<<>>,
+		State
+	).
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------

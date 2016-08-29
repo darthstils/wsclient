@@ -1,11 +1,11 @@
 PROJECT = wsclient
 
 # deps
-DEPS = lager reloader wamper
+DEPS = lager reloader 
 # deps urls
 dep_lager 		= git https://github.com/basho/lager.git
 dep_reloader 	= git https://github.com/oinksoft/reloader.git
-dep_wamper 	 	= git https://github.com/bwegh/wamper.git
+#
 
 # Compiler options.
 ERLC_OPTS ?= -W1

@@ -3,24 +3,27 @@
 -include("records.hrl").
 
 -export([
-	message/2
+	message/3
 ]).
 
 %%--------------------------------------------------------------------
 %%
 %%--------------------------------------------------------------------
-message({system,handshake_ok},_State) ->
+message({system,handshake_ok},_,_State) ->
 
-	wshandler:send({<<"kyky">>,binary});
+	wshandler:send({<<"HELLO!">>,binary}),
+	wshandler:send({<<"HELLO!">>,text}),
 
-message({system,ping},_State) ->
+	[];
+
+message({system,ping},_Reason,_State) ->
 
 	wshandler:send({<<>>,pong});
 
-message({system,close},_State) ->
+message({system,close},_Reason,_State) ->
 
 	wshandler:disconnect();
 
-message(Message,_State) ->
-
+message(_,Message,_State) ->
+	
 	io:format("~p~n",[Message]).
