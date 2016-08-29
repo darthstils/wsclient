@@ -1,10 +1,10 @@
 PROJECT = wsclient
 
 # deps
-DEPS = lager reloader 
+#DEPS = lager #reloader 
 # deps urls
-dep_lager 		= git https://github.com/basho/lager.git
-dep_reloader 	= git https://github.com/oinksoft/reloader.git
+#dep_lager 		= git https://github.com/basho/lager.git
+#dep_reloader 	= git https://github.com/oinksoft/reloader.git
 #
 
 # Compiler options.
